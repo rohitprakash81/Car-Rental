@@ -1,0 +1,8 @@
+package com.rohit.car_rental_api_spring_boot_project.enums;
+
+public enum PaymentStatus {
+    PENDING,
+    SUCCESS,
+    FAILED,
+    REFUNDED
+}

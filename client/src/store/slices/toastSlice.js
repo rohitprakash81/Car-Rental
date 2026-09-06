@@ -18,8 +18,8 @@ const toastSlice = createSlice({
     },
     hideToast: (state) => {
       state.message = null;
-    }
-  }
+    },
+  },
 });
 
 export const { showToast, hideToast } = toastSlice.actions;

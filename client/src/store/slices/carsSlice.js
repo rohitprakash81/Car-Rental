@@ -3,24 +3,28 @@ import { customerApi, carOwnerApi } from '../../services/api';
 
 export const fetchCustomerCars = createAsyncThunk(
   'cars/fetchCustomerCars',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 0, size = 6, sortBy = 'id', sortDir = 'desc' } = {}, { rejectWithValue }) => {
     try {
-      const data = await customerApi.getAllCars();
-      return Array.isArray(data) ? data : [];
+      const data = await customerApi.getAllCars({ page, size, sortBy, sortDir });
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to load cars from backend');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || 'Failed to load cars from backend'
+      );
     }
   }
 );
 
 export const fetchOwnerCars = createAsyncThunk(
   'cars/fetchOwnerCars',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 0, size = 6, sortBy = 'id', sortDir = 'desc' } = {}, { rejectWithValue }) => {
     try {
-      const data = await carOwnerApi.getAllCars();
-      return Array.isArray(data) ? data : [];
+      const data = await carOwnerApi.getAllCars({ page, size, sortBy, sortDir });
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to load owner cars from backend');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || 'Failed to load owner cars from backend'
+      );
     }
   }
 );
@@ -32,7 +36,9 @@ export const registerCar = createAsyncThunk(
       const res = await carOwnerApi.registerCar(carData);
       return res;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to register car');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || 'Failed to register car'
+      );
     }
   }
 );
@@ -42,6 +48,22 @@ const carsSlice = createSlice({
   initialState: {
     cars: [],
     ownerCars: [],
+    customerPagination: {
+      pageNumber: 0,
+      pageSize: 6,
+      totalElements: 0,
+      totalPages: 1,
+      isFirst: true,
+      isLast: true,
+    },
+    ownerPagination: {
+      pageNumber: 0,
+      pageSize: 6,
+      totalElements: 0,
+      totalPages: 1,
+      isFirst: true,
+      isLast: true,
+    },
     loading: false,
     error: null,
     registerSuccess: false,
@@ -50,7 +72,7 @@ const carsSlice = createSlice({
     resetRegisterState: (state) => {
       state.registerSuccess = false;
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -61,7 +83,28 @@ const carsSlice = createSlice({
       })
       .addCase(fetchCustomerCars.fulfilled, (state, action) => {
         state.loading = false;
-        state.cars = action.payload;
+        const payload = action.payload;
+        if (payload && Array.isArray(payload.content)) {
+          state.cars = payload.content;
+          state.customerPagination = {
+            pageNumber: payload.pageNumber,
+            pageSize: payload.pageSize,
+            totalElements: payload.totalElements,
+            totalPages: payload.totalPages,
+            isFirst: payload.isFirst,
+            isLast: payload.isLast,
+          };
+        } else if (Array.isArray(payload)) {
+          state.cars = payload;
+          state.customerPagination = {
+            pageNumber: 0,
+            pageSize: payload.length,
+            totalElements: payload.length,
+            totalPages: 1,
+            isFirst: true,
+            isLast: true,
+          };
+        }
       })
       .addCase(fetchCustomerCars.rejected, (state, action) => {
         state.loading = false;
@@ -74,7 +117,28 @@ const carsSlice = createSlice({
       })
       .addCase(fetchOwnerCars.fulfilled, (state, action) => {
         state.loading = false;
-        state.ownerCars = action.payload;
+        const payload = action.payload;
+        if (payload && Array.isArray(payload.content)) {
+          state.ownerCars = payload.content;
+          state.ownerPagination = {
+            pageNumber: payload.pageNumber,
+            pageSize: payload.pageSize,
+            totalElements: payload.totalElements,
+            totalPages: payload.totalPages,
+            isFirst: payload.isFirst,
+            isLast: payload.isLast,
+          };
+        } else if (Array.isArray(payload)) {
+          state.ownerCars = payload;
+          state.ownerPagination = {
+            pageNumber: 0,
+            pageSize: payload.length,
+            totalElements: payload.length,
+            totalPages: 1,
+            isFirst: true,
+            isLast: true,
+          };
+        }
       })
       .addCase(fetchOwnerCars.rejected, (state, action) => {
         state.loading = false;
@@ -95,7 +159,7 @@ const carsSlice = createSlice({
         state.error = action.payload;
         state.registerSuccess = false;
       });
-  }
+  },
 });
 
 export const { resetRegisterState } = carsSlice.actions;

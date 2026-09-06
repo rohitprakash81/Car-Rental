@@ -1,24 +1,38 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { authApi, carOwnerApi } from '../../services/api';
+import { authApi } from '../../services/api';
 
 const savedUser = localStorage.getItem('car_rental_current_user');
 const initialUser = savedUser ? JSON.parse(savedUser) : null;
+
+export const checkAuth = createAsyncThunk('auth/checkAuth', async (_, { rejectWithValue }) => {
+  try {
+    const res = await authApi.getMe();
+    const user = res.data;
+    localStorage.setItem('car_rental_current_user', JSON.stringify(user));
+    return user;
+  } catch {
+    localStorage.removeItem('car_rental_current_user');
+    return rejectWithValue(null);
+  }
+});
 
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ credentials, role }, { rejectWithValue }) => {
     try {
       let res;
-      if (role === 'CarOwner') {
+      if (role === 'SUPER_ADMIN' || role === 'SuperAdmin') {
+        res = await authApi.loginSuperAdmin(credentials);
+      } else if (role === 'CarOwner' || role === 'CAR_OWNER') {
         res = await authApi.loginCarOwner(credentials);
       } else {
         res = await authApi.loginCustomer(credentials);
       }
-      
-      const user = (res && typeof res === 'object' && res.user) ? res.user : {
+
+      const user = res.data || {
         email: credentials.email,
         name: credentials.email.split('@')[0],
-        role
+        role,
       };
 
       localStorage.setItem('car_rental_current_user', JSON.stringify(user));
@@ -34,36 +48,30 @@ export const registerUser = createAsyncThunk(
   async ({ userData, role }, { rejectWithValue }) => {
     try {
       let res;
-      if (role === 'CarOwner') {
+      if (role === 'CarOwner' || role === 'CAR_OWNER') {
         res = await authApi.registerCarOwner(userData);
       } else {
         res = await authApi.registerCustomer(userData);
       }
 
-      const user = (res && typeof res === 'object' && res.user) ? res.user : { ...userData, role };
+      const user = res.data || { ...userData, role };
       localStorage.setItem('car_rental_current_user', JSON.stringify(user));
-      return { user, message: res.message || 'Account created successfully!' };
+      return { user, message: res.message || 'Account registered successfully!' };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Registration failed');
     }
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  'auth/logoutUser',
-  async (_, { getState }) => {
-    const { auth } = getState();
-    if (auth.user?.role === 'CarOwner') {
-      try {
-        await carOwnerApi.logoutCarOwner();
-      } catch (e) {
-        console.error('Logout error on backend', e);
-      }
-    }
-    localStorage.removeItem('car_rental_current_user');
-    return null;
+export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+  try {
+    await authApi.logout();
+  } catch (e) {
+    console.warn('Logout backend warning:', e);
   }
-);
+  localStorage.removeItem('car_rental_current_user');
+  return null;
+});
 
 const authSlice = createSlice({
   name: 'auth',
@@ -86,10 +94,20 @@ const authSlice = createSlice({
     },
     clearAuthError: (state) => {
       state.error = null;
-    }
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Check Auth
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(checkAuth.rejected, (state) => {
+        state.user = null;
+      })
       // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
@@ -123,8 +141,8 @@ const authSlice = createSlice({
         state.user = null;
         state.loading = false;
       });
-  }
+  },
 });
 
-export const { openAuthModal, closeAuthModal, clearAuthError } = authSlice.actions;
+export const { openAuthModal, closeAuthModal, clearAuthError, setUser } = authSlice.actions;
 export default authSlice.reducer;

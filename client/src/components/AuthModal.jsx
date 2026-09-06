@@ -2,13 +2,26 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { loginUser, registerUser, closeAuthModal, openAuthModal } from '../store/slices/authSlice';
 import { showToast } from '../store/slices/toastSlice';
-import { X, Mail, Lock, User, Phone, MapPin, FileCheck, Shield, Sparkles, LogIn, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  MapPin,
+  FileCheck,
+  Shield,
+  Sparkles,
+  LogIn,
+  AlertCircle,
+  ShieldAlert,
+} from 'lucide-react';
 
 export default function AuthModal() {
   const dispatch = useDispatch();
   const { isAuthModalOpen, authModalMode, loading, error } = useSelector((state) => state.auth);
 
-  const [role, setRole] = useState('Customer'); // 'Customer' | 'CarOwner'
+  const [role, setRole] = useState('Customer'); // 'Customer' | 'CarOwner' | 'SUPER_ADMIN'
 
   const [formData, setFormData] = useState({
     name: '',
@@ -16,7 +29,7 @@ export default function AuthModal() {
     password: '',
     phoneNumber: '',
     address: '',
-    licenseNumber: ''
+    licenseNumber: '',
   });
 
   if (!isAuthModalOpen) return null;
@@ -32,27 +45,71 @@ export default function AuthModal() {
       const res = await dispatch(
         loginUser({
           credentials: { email: formData.email, password: formData.password },
-          role
+          role,
         })
       );
 
       if (loginUser.fulfilled.match(res)) {
-        dispatch(showToast(`Welcome back, ${res.payload.user.name}!`));
+        dispatch(showToast(`Welcome back, ${res.payload.user?.name || 'User'}!`));
       } else {
-        dispatch(showToast(res.payload || 'Login failed', { type: 'error' }));
+        dispatch(showToast({ message: res.payload || 'Login failed', type: 'error' }));
       }
     } else {
+      if (!formData.name || formData.name.trim().length < 2) {
+        dispatch(showToast({ message: 'Name must be at least 2 characters long', type: 'error' }));
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        dispatch(showToast({ message: 'Please enter a valid email address', type: 'error' }));
+        return;
+      }
+      if (!formData.password || formData.password.length < 8) {
+        dispatch(
+          showToast({ message: 'Password must be at least 8 characters long', type: 'error' })
+        );
+        return;
+      }
+      const phoneRegex = /^[6-9]\d{9}$/;
+      if (!phoneRegex.test(formData.phoneNumber)) {
+        dispatch(
+          showToast({
+            message: 'Please enter a valid 10-digit Indian phone number starting with 6-9',
+            type: 'error',
+          })
+        );
+        return;
+      }
+      if (!formData.address || !formData.address.trim()) {
+        dispatch(showToast({ message: 'Address is required', type: 'error' }));
+        return;
+      }
+      if (role === 'CarOwner') {
+        const licenseRegex = /^[A-Za-z0-9-]{5,30}$/;
+        if (!licenseRegex.test(formData.licenseNumber)) {
+          dispatch(
+            showToast({
+              message: 'Driving license must be between 5 and 30 alphanumeric characters',
+              type: 'error',
+            })
+          );
+          return;
+        }
+      }
+
       const res = await dispatch(
         registerUser({
           userData: formData,
-          role
+          role,
         })
       );
 
       if (registerUser.fulfilled.match(res)) {
-        dispatch(showToast(`Registered successfully as ${role === 'CarOwner' ? 'Car Owner' : 'Customer'}!`));
+        dispatch(
+          showToast(`Registered successfully as ${role === 'CarOwner' ? 'Car Owner' : 'Customer'}!`)
+        );
       } else {
-        dispatch(showToast(res.payload || 'Registration failed', { type: 'error' }));
+        dispatch(showToast({ message: res.payload || 'Registration failed', type: 'error' }));
       }
     }
   };
@@ -60,7 +117,6 @@ export default function AuthModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative">
-        
         {/* Header */}
         <div className="relative p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800">
           <button
@@ -81,15 +137,14 @@ export default function AuthModal() {
             {authModalMode === 'login' ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            {authModalMode === 'login' 
-              ? 'Select your role and sign in to continue' 
+            {authModalMode === 'login'
+              ? 'Select your role and sign in with secure HttpOnly cookies'
               : 'Join as a Customer or list your vehicles as a Car Owner'}
           </p>
         </div>
 
         {/* Tab & Role Selector */}
         <div className="p-6 pb-2 space-y-4">
-          
           {/* Mode Switch (Login / Register) */}
           <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800">
             <button
@@ -105,7 +160,10 @@ export default function AuthModal() {
             </button>
             <button
               type="button"
-              onClick={() => dispatch(openAuthModal('register'))}
+              onClick={() => {
+                dispatch(openAuthModal('register'));
+                if (role === 'SUPER_ADMIN') setRole('Customer');
+              }}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                 authModalMode === 'register'
                   ? 'bg-indigo-600 text-white shadow-md'
@@ -116,40 +174,57 @@ export default function AuthModal() {
             </button>
           </div>
 
-          {/* Role Switcher (Customer / CarOwner) */}
+          {/* Role Switcher */}
           <div>
-            <label className="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">
-              Account Role
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] uppercase font-bold text-slate-400">Account Role</label>
+            </div>
+
+            <div
+              className={`grid gap-2 ${authModalMode === 'login' ? 'grid-cols-3' : 'grid-cols-2'}`}
+            >
               <button
                 type="button"
                 onClick={() => setRole('Customer')}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                className={`py-2 px-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                   role === 'Customer'
                     ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
                     : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700'
                 }`}
               >
-                <User className="w-4 h-4" />
+                <User className="w-3.5 h-3.5" />
                 Customer
               </button>
 
               <button
                 type="button"
                 onClick={() => setRole('CarOwner')}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                className={`py-2 px-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                   role === 'CarOwner'
                     ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
                     : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700'
                 }`}
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="w-3.5 h-3.5" />
                 Car Owner
               </button>
+
+              {authModalMode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => setRole('SUPER_ADMIN')}
+                  className={`py-2 px-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    role === 'SUPER_ADMIN'
+                      ? 'border-purple-500 bg-purple-500/10 text-purple-300'
+                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Admin
+                </button>
+              )}
             </div>
           </div>
-
         </div>
 
         {/* Error Alert Banner */}
@@ -162,7 +237,6 @@ export default function AuthModal() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-3.5">
-          
           {authModalMode === 'register' && (
             <div>
               <label className="block text-xs text-slate-400 mb-1">Full Name</label>
@@ -172,6 +246,8 @@ export default function AuthModal() {
                   type="text"
                   name="name"
                   required
+                  minLength={2}
+                  maxLength={50}
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
@@ -198,13 +274,16 @@ export default function AuthModal() {
           </div>
 
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Password</label>
+            <label className="block text-xs text-slate-400 mb-1">
+              Password {authModalMode === 'register' && '(min 8 characters)'}
+            </label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
               <input
                 type="password"
                 name="password"
                 required
+                minLength={authModalMode === 'register' ? 8 : 1}
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
@@ -216,13 +295,18 @@ export default function AuthModal() {
           {authModalMode === 'register' && (
             <>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Phone Number</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  Phone Number (10-digit Indian Mobile)
+                </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                   <input
-                    type="text"
+                    type="tel"
                     name="phoneNumber"
                     required
+                    pattern="[6-9][0-9]{9}"
+                    maxLength={10}
+                    title="10-digit Indian mobile number starting with 6, 7, 8, or 9"
                     placeholder="9876543210"
                     value={formData.phoneNumber}
                     onChange={handleChange}
@@ -239,6 +323,7 @@ export default function AuthModal() {
                     type="text"
                     name="address"
                     required
+                    maxLength={255}
                     placeholder="Gurugram, Haryana"
                     value={formData.address}
                     onChange={handleChange}
@@ -249,17 +334,23 @@ export default function AuthModal() {
 
               {role === 'CarOwner' && (
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Driver License Number</label>
+                  <label className="block text-xs text-slate-400 mb-1">
+                    Driver License Number (5-30 characters)
+                  </label>
                   <div className="relative">
                     <FileCheck className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                     <input
                       type="text"
                       name="licenseNumber"
                       required
+                      minLength={5}
+                      maxLength={30}
+                      pattern="[A-Za-z0-9-]{5,30}"
+                      title="5 to 30 alphanumeric characters or hyphens"
                       placeholder="DL123456789"
                       value={formData.licenseNumber}
                       onChange={handleChange}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 uppercase font-mono"
                     />
                   </div>
                 </div>
@@ -270,14 +361,23 @@ export default function AuthModal() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className={`w-full mt-4 py-3 rounded-xl font-bold text-sm shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-white ${
+              role === 'SUPER_ADMIN'
+                ? 'bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 shadow-purple-500/25 hover:shadow-purple-500/40'
+                : 'bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 shadow-indigo-500/25 hover:shadow-indigo-500/40'
+            }`}
           >
             {loading ? (
-              <span>Authenticating with Backend...</span>
+              <span>Authenticating...</span>
             ) : authModalMode === 'login' ? (
               <>
                 <LogIn className="w-4 h-4" />
-                Sign In as {role === 'CarOwner' ? 'Owner' : 'Customer'}
+                Sign In as{' '}
+                {role === 'SUPER_ADMIN'
+                  ? 'Super Admin'
+                  : role === 'CarOwner'
+                    ? 'Owner'
+                    : 'Customer'}
               </>
             ) : (
               <>
@@ -286,9 +386,7 @@ export default function AuthModal() {
               </>
             )}
           </button>
-
         </form>
-
       </div>
     </div>
   );

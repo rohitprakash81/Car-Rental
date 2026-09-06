@@ -1,23 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCustomerCars } from '../store/slices/carsSlice';
-import { 
-  Search, 
-  ShieldCheck, 
-  Clock, 
-  Zap, 
-  Sparkles,
-  Car as CarIcon
-} from 'lucide-react';
+import { Search, ShieldCheck, Clock, Zap, Sparkles, Car as CarIcon } from 'lucide-react';
 import CarCard from '../components/CarCard';
 import BookingModal from '../components/BookingModal';
+import Pagination from '../components/Pagination';
 
 export default function Home() {
   const dispatch = useDispatch();
-  const { cars, loading } = useSelector((state) => state.cars);
+  const { cars, customerPagination, loading } = useSelector((state) => state.cars);
 
   const [selectedCar, setSelectedCar] = useState(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [page, setPage] = useState(0);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,8 +21,8 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState(10000);
 
   useEffect(() => {
-    dispatch(fetchCustomerCars());
-  }, [dispatch]);
+    dispatch(fetchCustomerCars({ page, size: 6 }));
+  }, [dispatch, page]);
 
   const handleBook = (car) => {
     setSelectedCar(car);
@@ -35,10 +30,10 @@ export default function Home() {
   };
 
   // Extract unique brands for filter
-  const brands = ['All', ...new Set(cars.map(c => c.brand).filter(Boolean))];
+  const brands = ['All', ...new Set(cars.map((c) => c.brand).filter(Boolean))];
 
-  const filteredCars = cars.filter(car => {
-    const matchesSearch = 
+  const filteredCars = cars.filter((car) => {
+    const matchesSearch =
       (car.brand && car.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (car.model && car.model.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (car.vehicleNumber && car.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -52,16 +47,13 @@ export default function Home() {
 
   return (
     <div className="space-y-20 pb-16">
-      
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 overflow-hidden">
-        
         {/* Glow effect backdrops */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/20 blur-[140px] rounded-full pointer-events-none" />
         <div className="absolute top-1/3 right-10 w-[300px] h-[250px] bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-slate-800 text-indigo-400 text-xs font-semibold mb-6 shadow-xl backdrop-blur-md">
             <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -70,11 +62,15 @@ export default function Home() {
 
           <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight max-w-4xl mx-auto">
             Drive Your Freedom. <br className="hidden sm:inline" />
-            Rent Luxury & Daily Cars <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">Instantly.</span>
+            Rent Luxury & Daily Cars{' '}
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
+              Instantly.
+            </span>
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Direct real-time Spring Boot backend integration. Choose from verified vehicles, transparent daily rates, and zero security deposit hassle.
+            Direct real-time Spring Boot backend integration. Choose from verified vehicles,
+            transparent daily rates, and zero security deposit hassle.
           </p>
 
           {/* Quick Stats Bar */}
@@ -96,29 +92,28 @@ export default function Home() {
               <div className="text-xs text-slate-400 font-medium">Insured Fleet</div>
             </div>
           </div>
-
         </div>
       </section>
 
       {/* Main Fleet Exploration Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-indigo-400">Backend Fleet API</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+              Backend Fleet API
+            </div>
             <h2 className="text-3xl font-extrabold text-white mt-1">Explore Available Cars</h2>
           </div>
           <p className="text-xs text-slate-400 max-w-md">
-  Filter vehicles by brand, fuel type, or daily budget. Click "Book Now" to send a live request to backend endpoint `/customer/bookCar/{'{'}carId{'}'}`.
-</p>
+            Filter vehicles by brand, fuel type, or daily budget. Click "Book Now" to send a live
+            request to backend endpoint `/customer/bookCar/{'{'}carId{'}'}`.
+          </p>
         </div>
 
         {/* Search & Filter Bar */}
         <div className="bg-slate-900/80 p-4 rounded-3xl border border-slate-800/80 backdrop-blur-xl shadow-xl space-y-4">
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            
             {/* Search Input */}
             <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
               <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
@@ -138,9 +133,9 @@ export default function Home() {
                 onChange={(e) => setSelectedBrand(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
               >
-                {brands.map(brand => (
+                {brands.map((brand) => (
                   <option key={brand} value={brand}>
-                    Brand: {brand}
+                    {brand}
                   </option>
                 ))}
               </select>
@@ -177,16 +172,17 @@ export default function Home() {
                 className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
               />
             </div>
-
           </div>
-
         </div>
 
         {/* Cars Grid View */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-12">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="bg-slate-900/50 rounded-3xl h-80 border border-slate-800 animate-pulse flex items-center justify-center text-xs text-slate-500">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="bg-slate-900/50 rounded-3xl h-80 border border-slate-800 animate-pulse flex items-center justify-center text-xs text-slate-500"
+              >
                 Fetching backend API...
               </div>
             ))}
@@ -196,7 +192,8 @@ export default function Home() {
             <CarIcon className="w-12 h-12 text-slate-600 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-white">No Vehicles Returned from Backend</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              If the Spring Boot server is running on localhost:1571, add cars via the Owner Portal to populate the fleet.
+              If the Spring Boot server is running on localhost:1571, add cars via the Owner Portal
+              to populate the fleet.
             </p>
             <button
               onClick={() => {
@@ -212,24 +209,39 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCars.map(car => (
-              <CarCard
-                key={car.id || car.vehicleNumber}
-                car={car}
-                onBook={handleBook}
-              />
-            ))}
-          </div>
-        )}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCars.map((car) => (
+                <CarCard key={car.id || car.vehicleNumber} car={car} onBook={handleBook} />
+              ))}
+            </div>
 
+            {/* Pagination Controls */}
+            {customerPagination && (
+              <Pagination
+                currentPage={customerPagination.pageNumber}
+                totalPages={customerPagination.totalPages}
+                totalElements={customerPagination.totalElements}
+                pageSize={customerPagination.pageSize}
+                onPageChange={(newPage) => {
+                  setPage(newPage);
+                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                }}
+              />
+            )}
+          </>
+        )}
       </section>
 
       {/* Feature Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 border-t border-slate-900">
         <div className="text-center mb-12">
-          <span className="text-xs uppercase font-bold tracking-wider text-indigo-400">Spring Boot + Redux Architecture</span>
-          <h2 className="text-3xl font-extrabold text-white mt-1">Built for Full Stack Production</h2>
+          <span className="text-xs uppercase font-bold tracking-wider text-indigo-400">
+            Spring Boot + Redux Architecture
+          </span>
+          <h2 className="text-3xl font-extrabold text-white mt-1">
+            Built for Full Stack Production
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -239,7 +251,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-bold text-white">Redux Toolkit Slices</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Global state managed cleanly with Redux slices (`authSlice`, `carsSlice`, `bookingsSlice`, `toastSlice`).
+              Global state managed cleanly with Redux slices (`authSlice`, `carsSlice`,
+              `bookingsSlice`, `toastSlice`).
             </p>
           </div>
 
@@ -249,7 +262,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-bold text-white">Pure API Calls</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Direct interaction with Spring Boot REST API (`/auth/*`, `/customer/*`, `/carOwner/*`) with zero static dummy mock fallbacks.
+              Direct interaction with Spring Boot REST API (`/auth/*`, `/customer/*`, `/carOwner/*`)
+              with zero static dummy mock fallbacks.
             </p>
           </div>
 
@@ -259,7 +273,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-bold text-white">Async Thunks</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Clean asynchronous API lifecycle handling with automatic loading, success, and error dispatchers.
+              Clean asynchronous API lifecycle handling with automatic loading, success, and error
+              dispatchers.
             </p>
           </div>
         </div>
@@ -272,7 +287,6 @@ export default function Home() {
         onClose={() => setIsBookingOpen(false)}
         onSuccess={() => dispatch(fetchCustomerCars())}
       />
-
     </div>
   );
 }

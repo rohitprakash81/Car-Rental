@@ -1,0 +1,1070 @@
+{
+  "info": {
+    "_postman_id": "720cd0b4-c82e-4335-b73a-1d7f6e796871",
+    "name": "Car Rental Management",
+    "description": "Production-grade Postman collection for Car Rental System featuring Super Admin Governance, ACID Concurrency Bookings, Razorpay Payments with automated cryptographic HMAC-SHA256 signature calculation, Cloudinary Media Uploads, Sliding Window Rate Limiting, and Zero-Session Stateless HttpOnly JWT Authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication & Session Management",
+      "item": [
+        {
+          "name": "Register Car Owner",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rohit Prakash\",\n  \"email\": \"rahulprakash6388@gmail.com\",\n  \"password\": \"rahulprakash6388\",\n  \"phoneNumber\": \"8355087256\",\n  \"address\": \"Sector 45, Gurugram, Haryana\",\n  \"licenseNumber\": \"HR2620210012346\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/registerCarOwner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "registerCarOwner"
+              ]
+            },
+            "description": "Registers a new Car Owner in PENDING status. Sends onboarding notification email via Gmail SMTP."
+          },
+          "response": []
+        },
+        {
+          "name": "Register Customer",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Prakash\",\n  \"email\": \"rahulprakash0898@gmail.com\",\n  \"password\": \"rahulprakash0898\",\n  \"phoneNumber\": \"6388689662\",\n  \"address\": \"Saket, New Delhi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/registerCustomer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "registerCustomer"
+              ]
+            },
+            "description": "Registers a new customer. Customer is immediately active and receives a welcome email."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Super Admin",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@carrental.com\",\n  \"password\": \"SuperAdmin@2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/loginSuperAdmin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "loginSuperAdmin"
+              ]
+            },
+            "description": "Authenticates Platform Super Admin. Issues secure HttpOnly accessToken and refreshToken cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Car Owner",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rahulprakash6388@gmail.com\",\n  \"password\": \"rahulprakash6388\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/loginCarOwner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "loginCarOwner"
+              ]
+            },
+            "description": "Authenticates Car Owner. Sets HttpOnly cookies. Blocked owners are refused entry."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Customer",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rahulprakash0898@gmail.com\",\n  \"password\": \"rahulprakash0898\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/loginCustomer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "loginCustomer"
+              ]
+            },
+            "description": "Authenticates Passenger/Customer. Sets HttpOnly cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Restores session using active HttpOnly accessToken cookie."
+          },
+          "response": []
+        },
+        {
+          "name": "Silent Refresh Token Rotation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Rotates refresh token and issues fresh access token without user interruption."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout (Stateless Invalidation & Blacklist)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Blacklists JWT access token, revokes refresh token in database, and clears cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Image to Cloudinary",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "value": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/upload-image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "upload-image"
+              ]
+            },
+            "description": "Uploads car image or ID proof to Cloudinary and returns secure HTTPS URL."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Super Admin Governance",
+      "item": [
+        {
+          "name": "Get Platform KPI Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/dashboard/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "dashboard",
+                "stats"
+              ]
+            },
+            "description": "Returns counts of customers, owners, pending approvals, fleet size, bookings, and platform revenue."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Car Owners (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/owners/pending?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "owners",
+                "pending"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lists all car owners awaiting verification by Super Admin."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Car Owners",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/owners/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "owners",
+                "all"
+              ]
+            },
+            "description": "Returns all registered car owners on the platform."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Car Owner (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": true,\n  \"reason\": \"All KYC and Driving License documents verified successfully\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/owners/{{ownerId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "owners",
+                "{{ownerId}}",
+                "verify"
+              ]
+            },
+            "description": "Approves Car Owner. Updates status to APPROVED and sends approval email notification."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Car Owner (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": false,\n  \"reason\": \"Driving License is expired or details could not be verified\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/owners/{{ownerId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "owners",
+                "{{ownerId}}",
+                "verify"
+              ]
+            },
+            "description": "Rejects Car Owner application with a clear reason."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Vehicles (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/cars/pending?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "cars",
+                "pending"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lists all vehicles submitted by verified owners awaiting approval."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/cars/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "cars",
+                "all"
+              ]
+            },
+            "description": "Returns all vehicles in the system."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Vehicle (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": true,\n  \"reason\": \"Vehicle RC and Insurance verified successfully\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/cars/{{carId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "cars",
+                "{{carId}}",
+                "verify"
+              ]
+            },
+            "description": "Approves car for public listing. Sends vehicle approval confirmation email to the owner."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Vehicle (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": false,\n  \"reason\": \"Insurance validity date has expired or RC mismatch\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/cars/{{carId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "cars",
+                "{{carId}}",
+                "verify"
+              ]
+            },
+            "description": "Rejects vehicle listing with specific rejection reason."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Platform Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "users"
+              ]
+            },
+            "description": "Returns full user list with account lock/verification status."
+          },
+          "response": []
+        },
+        {
+          "name": "Block / Suspend User (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"block\": true,\n  \"reason\": \"Violation of platform terms and safety policies\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/users/owner/{{ownerId}}/toggle-block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "users",
+                "owner",
+                "{{ownerId}}",
+                "toggle-block"
+              ]
+            },
+            "description": "Suspends user account immediately."
+          },
+          "response": []
+        },
+        {
+          "name": "Unblock / Reinstate User (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"block\": false,\n  \"reason\": \"Appeal accepted and account reinstated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/superadmin/users/owner/{{ownerId}}/toggle-block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "superadmin",
+                "users",
+                "owner",
+                "{{ownerId}}",
+                "toggle-block"
+              ]
+            },
+            "description": "Reinstates user account so they can log in and operate."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Car Owner Portal",
+      "item": [
+        {
+          "name": "Register New Car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleNumber\": \"HR26AB1234\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Innova Crysta\",\n  \"fuelType\": \"Diesel\",\n  \"seatingCapacity\": 7,\n  \"pricePerDay\": 2800,\n  \"pricePerKm\": 16,\n  \"rcNumber\": \"RC-DL-2024-9988\",\n  \"insuranceValidTill\": \"2027-12-31\",\n  \"imageUrl\": \"https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/registerCar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "registerCar"
+              ]
+            },
+            "description": "Registers vehicle under logged-in owner. Starts in PENDING approval status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All My Cars (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/getAllCars?page=0&size=6&sortBy=id&sortDir=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "getAllCars"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "6"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id"
+                },
+                {
+                  "key": "sortDir",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Returns all vehicles owned by logged-in car owner."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Car Owner Profile Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/carOwnerProfile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "carOwnerProfile"
+              ]
+            },
+            "description": "Checks logged-in car owner profile status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Bookings for My Cars",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/getPendingBookingForCarOwner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "getPendingBookingForCarOwner"
+              ]
+            },
+            "description": "Lists customer booking requests awaiting owner confirmation."
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Booking Request (ACID Locked)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/confirmedOrRejectBookingStatus/{{bookingId}}/ACCEPTED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "confirmedOrRejectBookingStatus",
+                "{{bookingId}}",
+                "ACCEPTED"
+              ]
+            },
+            "description": "Accepts booking with ACID lock, auto-cancels competing requests, and initiates 30-min payment countdown."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Booking Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carOwner/confirmedOrRejectBookingStatus/{{bookingId}}/REJECTED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carOwner",
+                "confirmedOrRejectBookingStatus",
+                "{{bookingId}}",
+                "REJECTED"
+              ]
+            },
+            "description": "Rejects the customer booking request."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout Car Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Car owner logout."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customer Portal",
+      "item": [
+        {
+          "name": "Browse Approved Available Cars (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customer/getAllCars?page=0&size=6&sortBy=id&sortDir=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customer",
+                "getAllCars"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "6"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id"
+                },
+                {
+                  "key": "sortDir",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Public / Customer catalog showing only approved vehicles ready for rental."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Booking Request (ACID Checked)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"journeyDate\": \"2026-10-15\",\n  \"source\": \"Gurugram Cyber Hub\",\n  \"destination\": \"Jaipur City Palace\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customer/bookCar/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customer",
+                "bookCar",
+                "{{carId}}"
+              ]
+            },
+            "description": "Creates a booking request under PENDING status with pessimistic lock check."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Bookings & Payment Timelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customer/getConfirmedBookingStatus?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customer",
+                "getConfirmedBookingStatus"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Returns customer bookings, total amounts, and countdown timer to payment deadline."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Razorpay Payments & Receipts",
+      "item": [
+        {
+          "name": "Create Razorpay Order for Accepted Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.orderId) {",
+                  "    pm.collectionVariables.set(\"razorpayOrderId\", res.data.orderId);",
+                  "    pm.collectionVariables.set(\"bookingId\", String(res.data.bookingId));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/create-order/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "create-order",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Creates Razorpay order with amount in paise, currency INR, and keyId for frontend checkout."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Razorpay Payment Signature",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const orderId = pm.collectionVariables.get(\"razorpayOrderId\") || \"order_TYl6nqBKeBq2vr\";",
+                  "const paymentId = \"pay_test_\" + Date.now();",
+                  "const keySecret = pm.collectionVariables.get(\"razorpayKeySecret\") || \"TDT77IWWsGiNYvIU7ALt1o9P\";",
+                  "const payload = orderId + \"|\" + paymentId;",
+                  "const hash = CryptoJS.HmacSHA256(payload, keySecret);",
+                  "const signature = CryptoJS.enc.Hex.stringify(hash);",
+                  "pm.collectionVariables.set(\"razorpayPaymentId\", paymentId);",
+                  "pm.collectionVariables.set(\"computedSignature\", signature);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"razorpayOrderId\": \"{{razorpayOrderId}}\",\n  \"razorpayPaymentId\": \"{{razorpayPaymentId}}\",\n  \"razorpaySignature\": \"{{computedSignature}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "verify"
+              ]
+            },
+            "description": "Verifies payment signature using HMAC SHA256, confirms booking, marks car as BOOKED, and dispatches invoice email."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Payment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/my-payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "my-payments"
+              ]
+            },
+            "description": "Returns all completed payment transactions and receipts for the customer."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{Token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:1571/api/v1"
+    },
+    {
+      "key": "bookingId",
+      "value": "8521"
+    },
+    {
+      "key": "carId",
+      "value": "9001"
+    },
+    {
+      "key": "ownerId",
+      "value": "2005"
+    },
+    {
+      "key": "razorpayOrderId",
+      "value": "order_TYl6nqBKeBq2vr"
+    },
+    {
+      "key": "razorpayPaymentId",
+      "value": "pay_mock_99887766"
+    },
+    {
+      "key": "computedSignature",
+      "value": "simulated_signature_hash"
+    },
+    {
+      "key": "razorpayKeySecret",
+      "value": "TDT77IWWsGiNYvIU7ALt1o9P"
+    }
+  ]
+}
