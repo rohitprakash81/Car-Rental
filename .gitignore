@@ -1,0 +1,18 @@
+# Node / Frontend
+client/node_modules/
+client/dist/
+client/.oxlintrc.json
+
+# Java / Maven / Backend
+sever/target/
+sever/bin/
+*.class
+*.jar
+*.war
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+*.log
+/.metadata/
