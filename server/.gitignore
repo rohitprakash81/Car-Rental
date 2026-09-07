@@ -41,3 +41,8 @@ build/
 ### OS Files ###
 .DS_Store
 Thumbs.db
+
+### Local Config & Backups ###
+src/main/resources/application.properties
+*.backup
+*.properties.backup

@@ -64,4 +64,9 @@ server/.factorypath
 .DS_Store
 Thumbs.db
 ehthumbs.db
+# Application Properties & Local Config
 server/src/main/resources/application.properties
+src/main/resources/application.properties
+**/application.properties
+*.backup
+*.properties.backup

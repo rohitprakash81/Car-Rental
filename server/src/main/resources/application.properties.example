@@ -1,0 +1,86 @@
+spring.application.name=car-rental-api-spring-boot-project
+# ===============================
+# MySQL Database Configuration (Cloud & Local Support)
+# ===============================
+
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/car-rental-api?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:root}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:your_db_password_here}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# ===============================
+# JPA / Hibernate
+# ===============================
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# ===============================
+# Server & Graceful Shutdown
+# ===============================
+
+server.port=${PORT:1571}
+server.shutdown=graceful
+spring.lifecycle.timeout-per-shutdown-phase=20s
+
+# ===============================
+# Stateless REST API Configuration
+# ===============================
+server.servlet.session.tracking-modes=
+
+# ===============================
+# Gmail SMTP Configuration
+# ===============================
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${SMTP_USERNAME:your_email@gmail.com}
+spring.mail.password=${SMTP_PASSWORD:your_app_password_here}
+
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# ===============================
+# JWT Configuration
+# ===============================
+jwt.secret=${JWT_SECRET:replace_with_a_secure_256bit_secret_key_here}
+jwt.access-token-expiration-ms=900000
+jwt.refresh-token-expiration-ms=604800000
+
+# ===============================
+# Razorpay Test Configuration
+# ===============================
+razorpay.key-id=${RAZORPAY_KEY_ID:rzp_test_your_key_id}
+razorpay.key-secret=${RAZORPAY_KEY_SECRET:your_razorpay_secret}
+
+# ===============================
+# Cloudinary Configuration
+# ===============================
+cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME:your_cloudinary_cloud_name}
+cloudinary.api-key=${CLOUDINARY_API_KEY:your_cloudinary_api_key}
+cloudinary.api-secret=${CLOUDINARY_API_SECRET:your_cloudinary_api_secret}
+
+# ===============================
+# Multipart File Upload
+# ===============================
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# ===============================
+# Cookie & Cross-Origin Security
+# (Set JWT_COOKIE_SECURE=true and JWT_COOKIE_SAME_SITE=None in HTTPS production e.g. Vercel)
+# ===============================
+jwt.cookie.secure=${JWT_COOKIE_SECURE:false}
+jwt.cookie.same-site=${JWT_COOKIE_SAME_SITE:Lax}
+
+# ===============================
+# Sliding Window Rate Limiting (Requests / Minute)
+# ===============================
+ratelimit.auth.limit=${RATE_LIMIT_AUTH_LIMIT:5}
+ratelimit.auth.window=${RATE_LIMIT_AUTH_WINDOW:60}
+ratelimit.payments.limit=${RATE_LIMIT_PAYMENTS_LIMIT:10}
+ratelimit.payments.window=${RATE_LIMIT_PAYMENTS_WINDOW:60}
+ratelimit.booking.limit=${RATE_LIMIT_BOOKING_LIMIT:15}
+ratelimit.booking.window=${RATE_LIMIT_BOOKING_WINDOW:60}
+ratelimit.default.limit=${RATE_LIMIT_DEFAULT_LIMIT:100}
+ratelimit.default.window=${RATE_LIMIT_DEFAULT_WINDOW:60}
