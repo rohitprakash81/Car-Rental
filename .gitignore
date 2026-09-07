@@ -64,3 +64,4 @@ server/.factorypath
 .DS_Store
 Thumbs.db
 ehthumbs.db
+server/src/main/resources/application.properties
